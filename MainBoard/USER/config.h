@@ -25,6 +25,9 @@ typedef uint32_t u32;
 
 #define MAX_DATA_LEN  8  //数据帧最大数据长度
 #define RESERVED_DATA 3  //标识符保留位数据
+
+#define DR_UPDATE
+
 //设备ID定义   ，最多定义16个ID
 typedef enum
 {

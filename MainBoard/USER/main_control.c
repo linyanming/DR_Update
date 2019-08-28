@@ -957,7 +957,9 @@ void ADCHandler(void)
 	TempCheck();
 	VolCheck();
 	OrtateFaultCheck();
+#ifndef DR_UPDATE
 	ReedkeyFaultCheck();
+#endif
 }
 
 /********************************
@@ -1022,7 +1024,11 @@ void DeviceStatusInit(void)
 	OrateMoveTime = 0;
 //	BigCurrenttime = 0;
 //	OrateMotorStatus = MOTORMOVESTOP;
+#ifdef DR_UPDATE
+	pwr_status = BOOT_RUN;
+#else
 	pwr_status = BOOT_STOP;  //停机开机管理变量
+#endif
 	pwr_time = 0; //关机时间计数
 	ConnStatus = DEVINIT;
 	DeviceMode = INCH_MODE;
