@@ -37,6 +37,8 @@ __IO u16 WpTime; //大功率报警时间
 
 __IO u16 beepwarntime;  //蜂鸣器报警时间
 __IO u32 beepwarnontime; //蜂鸣器报警持续时间
+
+#ifndef DR_UPDATE
 __IO u16 ledwarntime;	//LED报警时间
 __IO u16 ledwarnmaxtime;  //led报警时间间隔
 
@@ -44,8 +46,11 @@ __IO u8 yelflashtimes;  //黄灯闪烁次数
 __IO u8 redflashtimes;  //红灯闪烁次数
 __IO u8 yeltemptimes;   //替换变量
 __IO u8 redtemptimes;   //替换变量
+#endif
 
+#ifndef DR_UPDATE
 __IO u32 keypairtime; //配对按键按下时间
+#endif
 __IO u32 pairtime;    //配对持续时间
 
 //u8 ControlDevice;  //当前控制转向电机的设备
@@ -83,14 +88,18 @@ void WarningTimeCounter(void)
 	{
 		if(beepwarntime > 0)
 			beepwarntime++;
+#ifndef DR_UPDATE
 		if(ledwarntime > 0)
 			ledwarntime++;
+#endif
 		if(TempTime > 0)
 			TempTime++;
 		if(BeepIndTime > 0)
 			BeepIndTime++;
+#ifndef DR_UPDATE
 		if(OrtateMotorTime > 0)
 			OrtateMotorTime++;
+#endif
 		if(beepwarnontime > 0)
 			beepwarnontime--;
 		if(WpTime > 0)
@@ -118,6 +127,7 @@ void WarningTimeCounter(void)
 
 void WarningHandler(void)
 {
+#ifndef DR_UPDATE
 	if(BoardSt == ST_PAIR || BoardSt == ST_CANCELPAIR)
 	{
 		if(ledwarntime > 0 && ledwarntime < ledwarnmaxtime)
@@ -137,7 +147,8 @@ void WarningHandler(void)
 			ledwarntime = 1;
 		}
 	}
-	
+#endif
+
 	if(BoardSt >= VOL_FAULT && BoardSt <= TEMP_FAULT)
 	{
 		if(beepwarnontime > 0)
@@ -167,7 +178,8 @@ void WarningHandler(void)
 		{
 			BEEP = 0;
 		}
-
+		
+#ifndef DR_UPDATE
 		if(yelflashtimes > 0)
 		{
 			if(ledwarntime > 0 && ledwarntime < ledwarnmaxtime)
@@ -214,6 +226,7 @@ void WarningHandler(void)
 			redflashtimes = redtemptimes;
 		}
 	}
+#endif
 
 	if(BoardSt == ORTATE_FAULT || BoardSt == WORKPOWER_FAULT)
 	{
@@ -240,7 +253,7 @@ void WarningHandler(void)
 				beepwarntime = 1;
 			}
 		
-
+#ifndef DR_UPDATE
 			if(yelflashtimes > 0)
 			{
 				if(ledwarntime > 0 && ledwarntime < ledwarnmaxtime)
@@ -286,6 +299,7 @@ void WarningHandler(void)
 				yelflashtimes = yeltemptimes;
 				redflashtimes = redtemptimes;
 			}
+#endif
 		}
 		else
 		{
@@ -293,7 +307,11 @@ void WarningHandler(void)
 		}
 	}
 
+#ifdef DR_UPDATE
+	if(BoardSt == CONNECT_FAULT || BoardSt == MOTOR_FAULT)
+#else
 	if(BoardSt == CONNECT_FAULT || BoardSt == MOTOR_FAULT || BoardSt == REEDKEY_FAULT)
+#endif
 	{
 		if(beepwarntime > 0 && beepwarntime < BEEP_ONTIME)
 		{
@@ -323,10 +341,13 @@ void WarningHandler(void)
 		{
 			beepwarntime = 1;
 		}
-
+		
+#ifndef DR_UPDATE
 		RGBRED = 1;
 		RGBBLUE = 0;
 		RGBGREEN = 0;
+#endif
+
 	}
 }
 
@@ -378,16 +399,20 @@ BigCurrenttime = 1;
 		case ST_PAIR:
 			if(warnlv < PAIRWARN)
 			{
+#ifndef DR_UPDATE
 				ledwarntime = 1;
 				ledwarnmaxtime = RGB_QUIK_FLASH;
+#endif
 				warnlv = PAIRWARN;
 			}
 			break;
 		case ST_CANCELPAIR:
 			if(warnlv < CANCELPAIRWARN)
 			{
+#ifndef DR_UPDATE
 				ledwarntime = 1;
 				ledwarnmaxtime = RGB_NORMAL_FLASH;
+#endif
 				warnlv = CANCELPAIRWARN;
 			}
 			break;
@@ -395,12 +420,14 @@ BigCurrenttime = 1;
 			if(warnlv < WORKPOWERWARN)
 			{
 				beepwarntime = 1;
+#ifndef DR_UPDATE
 				ledwarntime = 1;
 			    ledwarnmaxtime = RGB_QUIK_FLASH;
 				yelflashtimes = 1;
 				redflashtimes = RGB_FLASH_TIMES - yelflashtimes;
 				yeltemptimes = yelflashtimes;
 				redtemptimes = redflashtimes;
+#endif
 				if(Speed != SPEED0)
 				{
 					beepwarnontime = 60000;
@@ -414,12 +441,14 @@ BigCurrenttime = 1;
 			if(warnlv < VOLWARN)
 			{
 				beepwarntime = 1;
+#ifndef DR_UPDATE
 				ledwarntime = 1;
 			    ledwarnmaxtime = RGB_QUIK_FLASH;
 				yelflashtimes = 3;
 				redflashtimes = RGB_FLASH_TIMES - yelflashtimes;
 				yeltemptimes = yelflashtimes;
 				redtemptimes = redflashtimes;
+#endif
 				beepwarnontime = 60000;
 				warnlv = VOLWARN;
 			}
@@ -428,12 +457,14 @@ BigCurrenttime = 1;
 			if(warnlv < ORTATEWARN)
 			{
 				beepwarntime = 1;
+#ifndef DR_UPDATE
 				ledwarntime = 1;
 			    ledwarnmaxtime = RGB_QUIK_FLASH;
 				yelflashtimes = 4;
 				redflashtimes = RGB_FLASH_TIMES - yelflashtimes;
 				yeltemptimes = yelflashtimes;
 				redtemptimes = redflashtimes;
+#endif
 				beepwarnontime = 10000;
 				Ortate_Motor_Brate();
 				MotorMoveStop();
@@ -444,21 +475,27 @@ BigCurrenttime = 1;
 			if(warnlv < TEMPWARN)
 			{
 				beepwarntime = 1;
+#ifndef DR_UPDATE
 				ledwarntime = 1;
 			    ledwarnmaxtime = RGB_QUIK_FLASH;
 				yelflashtimes = 2;
 				redflashtimes = RGB_FLASH_TIMES - yelflashtimes;
 				yeltemptimes = yelflashtimes;
 				redtemptimes = redflashtimes;
+#endif
 				beepwarnontime = 60000;
 				warnlv = TEMPWARN;
 			}
 			break;
+#ifndef DR_UPDATE
 		case REEDKEY_FAULT:
+#endif
 		case MOTOR_FAULT:
 			if(warnlv < MOTORWARN)
 			{
+#ifndef DR_UPDATE
 				Ortate_Motor_Brate();
+#endif
 				MotorMoveStop();
 				DeviceMode = INCH_MODE;
 				warnlv = MOTORWARN;
@@ -466,9 +503,11 @@ BigCurrenttime = 1;
 			break;
 		case CONNECT_FAULT:
 			if(warnlv < CONNECTWARN)
-
 			{
+#ifndef DR_UPDATE
 				Ortate_Motor_Brate();
+#endif
+
 				MotorMoveStop();
 				DeviceMode = INCH_MODE;
 				warnlv = CONNECTWARN;
@@ -477,6 +516,7 @@ BigCurrenttime = 1;
 		case NORMAL:
 			if(condev.connum > 0)
 			{
+#ifndef DR_UPDATE	
 				if(MoveMotorStatus != MOTORMOVESTOP)
 				{
 					RGBBLUE = 1;
@@ -495,15 +535,18 @@ BigCurrenttime = 1;
 				RGBGREEN = 1;
 				RGBRED = 1;
 			}
+#endif
 			if(warnlv != NOWARN)
 				BEEP = 0;
 			beepwarntime = 0;
+#ifndef DR_UPDATE	
 			ledwarntime = 0;
 //			BigCurrenttime = 0;
 			yelflashtimes = 0;
 			redflashtimes = 0;
 //			yeltemptimes = yelflashtimes;
 //			redtemptimes = redflashtimes;
+#endif
 			beepwarnontime = 0;
 			TempTime = 0;
 //			WpTime = 0;
@@ -559,10 +602,12 @@ void VoltageHandler(float vol)
 			{
 				if(Voldisflag == 0)
 				{
+#ifndef DR_UPDATE
 					LED1 = 1;
 					LED2 = 1;
 					LED3 = 1;
 					LED4 = 1;
+#endif
 				}
 				BoradVol = st;
 			}
@@ -579,10 +624,12 @@ void VoltageHandler(float vol)
 				
 				if(Voldisflag == 0)
 				{
+#ifndef DR_UPDATE
 					LED1 = 1;
 					LED2 = 1;
 					LED3 = 1;
 					LED4 = 0;
+#endif	
 				}
 				BoradVol = st;
 			}
@@ -865,6 +912,7 @@ void VolCheck(void)
 返回值：
 	无
 **************************************/
+#ifndef DR_UPDATE
 void OrtateFaultCheck(void)
 {
 	if(nF == 0)
@@ -884,7 +932,7 @@ void OrtateFaultCheck(void)
 		}
 	}
 }
-
+#endif
 /********************************
 跌倒开关错误确认函数
 功能：
@@ -896,6 +944,7 @@ void OrtateFaultCheck(void)
 返回值：
 	无
 **************************************/
+#ifndef DR_UPDATE
 void ReedkeyFaultCheck(void)
 {
 	if(REED_KEY == 1)
@@ -912,7 +961,7 @@ void ReedkeyFaultCheck(void)
 	}
 
 }
-
+#endif
 
 /********************************
 ADC采样处理函数
@@ -1004,14 +1053,17 @@ void DeviceStatusInit(void)
 {
 	Voldisflag = 0;
 	cpflag = 0;
-//	ControlDevice = MAIN_BOARD;
+#ifndef DR_UPDATE
 	keypairtime = 0;
+#endif
 	pairtime = 0;
 	SystemTime = 0;
 	StartTime = 0;
 	BeepIndTime = 0;
+#ifndef DR_UPDATE
 	OrtateMotorLock = 0;
 	OrtateMotorTime = 0;
+#endif
 	Speed = SPEED0;
 	now_speed = 0;
 	target_speed = 0;
@@ -1021,7 +1073,9 @@ void DeviceStatusInit(void)
 	NowVol = 0;
 	NowWp = 0;
 	MotorMoveTime = 0;
+#ifndef DR_UPDATE
 	OrateMoveTime = 0;
+#endif
 //	BigCurrenttime = 0;
 //	OrateMotorStatus = MOTORMOVESTOP;
 #ifdef DR_UPDATE
@@ -1055,7 +1109,11 @@ void MotorMoveStart(void)
 {
 	u8 st;
 	st = (DeviceMode << 1) + 1;
+#ifdef DR_UPDATE
+	TIM2->CCER |= 1 << 8;
+#else
 	TIM2->CCER |= 1 << 4;
+#endif
 	MotorMoveSpeedSet();
 	MoveMotorStatus = MOTORMOVERUN;
 	CAN_Send_Msg(&st, 1, MAIN_BOARD, MOTOR_CHANGE);
@@ -1079,8 +1137,14 @@ void MotorMoveStop(void)
 	now_speed = 0;
 	target_speed = 0;
 	Speed = 0;
+	
+#ifdef DR_UPDATE
+	TIM_SetCompare3(TIM2, now_speed);
+	TIM2->CCER &= 0xfeff;
+#else
 	TIM_SetCompare2(TIM2, now_speed);
-	TIM2->CCER &=  0xffef;
+	TIM2->CCER &= 0xffef;
+#endif
 	MoveMotorStatus = MOTORMOVESTOP;
 	CAN_Send_Msg(&st, 1, MAIN_BOARD, MOTOR_CHANGE);
 }
@@ -1277,12 +1341,20 @@ void SpeedChange(void)
 		{
 //			printf("now_speed = %d target_speed = %d\r\n",now_speed,target_speed);
 			now_speed += SPEED_SWITCH_BASE;
+#ifdef DR_UPDATE
+			TIM_SetCompare3(TIM2, now_speed);
+#else
 			TIM_SetCompare2(TIM2, now_speed);
+#endif
 		}
 		else if(now_speed > target_speed)
 		{
 			now_speed = target_speed;
+#ifdef DR_UPDATE
+			TIM_SetCompare3(TIM2, target_speed);
+#else
 			TIM_SetCompare2(TIM2, target_speed);
+#endif
 		}
 	}
 }
@@ -1481,6 +1553,7 @@ void ModeChangeHandler(CommandData* dev)
 返回值：
 	无
 **************************************/
+#ifndef DR_UPDATE
 void OrtateMotorControl(CommandData* dev)
 {
 	if(SearchDevice(dev->dev_id) != 0xff)
@@ -1555,30 +1628,19 @@ void OrtateMotorControl(CommandData* dev)
 						}
 
 					}
-//					ControlDevice = dev->dev_id;
-//				}
 			}
 			else
 			{	
-/*				if(BoardSt == NORMAL)
-
-				{
-					BeepIndTime = 1;
-					BEEP = 1;
-				}  */
-//				if(OrtateMotorStatus != ORTATE_STATUS_STOP)
-//				{
-					Ortate_Motor_Brate();
-					OrtateMotorLock = 0;
-					OrtateMotorTime = 0;
-					OrateMoveTime = 0;
-//					ControlDevice = MAIN_BOARD;
-//				}
+				Ortate_Motor_Brate();
+				OrtateMotorLock = 0;
+				OrtateMotorTime = 0;
+				OrateMoveTime = 0;
 			}
 		}
 		ReflashHeartBeat(dev->dev_id);
 	}
 }
+#endif
 
 /********************************
 电机移动控制
@@ -1595,7 +1657,11 @@ void MotorMoveControlHandler(CommandData* dev)
 {
 	if(SearchDevice(dev->dev_id) != 0xff)
 	{
+#ifdef DR_UPDATE
+		if(BoardSt <= WORKPOWER_FAULT && BoardSt != HIGH_VOL_FAULT && BoardSt != ST_PAIR && BoardSt != ST_CANCELPAIR)
+#else
 		if(BoardSt <= WORKPOWER_FAULT && BoardSt != HIGH_VOL_FAULT && BoardSt != ORTATE_FAULT && BoardSt != ST_PAIR && BoardSt != ST_CANCELPAIR)
+#endif
 		{
 			if(DeviceMode == INCH_MODE)
 			{
@@ -1614,21 +1680,12 @@ void MotorMoveControlHandler(CommandData* dev)
 							BEEP = 1;
 						}
 
-//						Speed = dev->data[0];
-//						MotorMoveSpeedSet();
 						MotorMoveStart();
 						MotorMoveTime = 1;
 					}
 				}
 				else if(dev->dev_cmd == STOP_MOVE)
 				{
-	/*				if(BoardSt == NORMAL)
-
-					{
-						BeepIndTime = 1;
-						BEEP = 1;
-					}*/
-
 					MotorMoveTime = 0;
 					MotorMoveStop();	
 				}
@@ -1788,7 +1845,7 @@ void KeyHandler(void)
 						{
 							CAN_Send_Msg(NULL, 0, MAIN_BOARD, PAIRING);
 						
-	BoardSt = ST_PAIR;
+							BoardSt = ST_PAIR;
 							pairtime = SystemTime;
 						}
 
@@ -1826,11 +1883,6 @@ void KeyHandler(void)
 		{
 			if(pwr_status == BOOT_STOP)
 			{
-		/*		if(PWR_GetFlagStatus(PWR_FLAG_WU) != RESET)
-				{
-					PWR_ClearFlag(PWR_FLAG_WU);
-				}
-				SYSCLKConfig_STOP();	*/
 				pwr_status = BOOT_INIT;
 				StartTime = 0;
 				pwr_time = 1;
@@ -1843,7 +1895,6 @@ void KeyHandler(void)
 			else
 			{
 				pwr_time = 1;
-	//				StartTime = 0;
 			}
 			KPWRFlag = 1;
 		}
@@ -1914,25 +1965,23 @@ void BootRunHandler(void)
 			case HEARTBEAT:
 				HeartBeatHandler(rxbuf.cmd.dev_id);
 				break;
+#ifndef DR_UPDATE
 			case LEFT_TURN:
 			case RIGHT_TURN:
 			case ORTATE_STOP:
 				OrtateMotorControl(&rxbuf.cmd);
-//					QuitPair();
 				break;
+#endif
 			case START_MOVE:
 			case RETREAT:
 			case STOP_MOVE:
 				MotorMoveControlHandler(&rxbuf.cmd);
-//					QuitPair();
 				break;
 			case SPEED_CNTR:
 				SpeedControlHandler(&rxbuf.cmd);
-//					QuitPair();
 				break;
 			case MODE_CHANGE:
 				ModeChangeHandler(&rxbuf.cmd);
-//					QuitPair();
 				break;
 			case PAIR_ACK:
 				PairAckHandler(&rxbuf.cmd);
@@ -1965,7 +2014,7 @@ void BootRunHandler(void)
 		BeepIndTime = 0;
 		BEEP = 0;
 	}
-
+#ifndef DR_UPDATE
 	if(OrateMoveTime > MAX_MOVE_TIME)
 	{
 		Ortate_Motor_Brate();
@@ -1974,7 +2023,7 @@ void BootRunHandler(void)
 		OrtateMotorTime = 0;
 //		ControlDevice = MAIN_BOARD;
 	}
-
+#endif
 	if((BoardSt == ST_PAIR || BoardSt == ST_CANCELPAIR) && (SystemTime - pairtime > PAIR_MAX_TIME))
 	{
 		BoardSt = NORMAL;
@@ -1982,6 +2031,7 @@ void BootRunHandler(void)
 		cpflag = 0;
 	}
 
+#ifndef DR_UPDATE
 	if(OrtateMotorTime > ORTATEMOTORTIME)
 	{
 		Ortate_Motor_Brate();
@@ -1989,6 +2039,7 @@ void BootRunHandler(void)
 		OrtateMotorLock = 1;
 		OrtateMotorTime = 0;
 	}
+#endif
 	KeyShakeCheck();
 	KeyHandler();
 	ConnectCheck();
@@ -2011,9 +2062,6 @@ BOOT_INIT状态处理函数
 
 void BootInitHandler(void)
 {
-	
-
-	
 	if(Voldisflag)
 	{
 		Volreflash();
@@ -2133,9 +2181,15 @@ void CloseBootCheck(void)
 void CloseBootHandler(void)
 {
 	SystemTime = 0;
+#ifdef DR_UPDATE
+	TIM2->CCER &=  0xfeff;
+#else
 	TIM2->CCER &=  0xffef;
+#endif
 	MoveMotorStatus = MOTORMOVESTOP;
+#ifndef DR_UPDATE
 	Ortate_Motor_Brate();
+#endif
 	BoardSt = NORMAL;
 	warnlv = NOWARN;
 	NowVol = 0;
@@ -2147,12 +2201,14 @@ void CloseBootHandler(void)
 	target_speed = 0;
 	cpflag = 0;
 	beepwarnontime = 0;
+#ifndef DR_UPDATE
 	yelflashtimes = 0;
 	redflashtimes = 0;
-	MotorMoveTime = 0;
 	OrtateMotorLock = 0;
 	OrtateMotorTime = 0;
 	OrateMoveTime = 0;
+#endif
+	MotorMoveTime = 0;
 	BeepIndTime = 0;
 	memset(&condev,0,sizeof(condev));
 	BEEP = 0;
@@ -2160,8 +2216,9 @@ void CloseBootHandler(void)
 	CAN_Send_Msg(NULL, 0, MAIN_BOARD, CLOSE_BOOT);
 	while(CAN_GetFlagStatus(CAN1, CAN_FLAG_RQCP0) == RESET);
 	BoradVol = VOL_NONE;
-	
+#ifndef DR_UPDATE
 	Led_Reset();
+#endif
 }
 
 /********************************
@@ -2175,6 +2232,7 @@ void CloseBootHandler(void)
 返回值：
 	无
 **************************************/
+#ifndef DR_UPDATE
 void Voldisplay(float vol)
 {
 	if(vol > VOLTAGE3)
@@ -2214,7 +2272,7 @@ void Voldisplay(float vol)
 		LED4 = 0;
 	}
 }
-
+#endif
 /********************************
 主控处理函数
 功能：

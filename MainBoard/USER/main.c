@@ -70,7 +70,9 @@ int main(void)
 #ifdef USART_DEBUG
 	Usart1_Init(115200);
 #endif
+#ifndef DR_UPDATE
 	Led_Init();
+#endif
 	Motor_Pwm_Init();
 	
 	CAN_Config();

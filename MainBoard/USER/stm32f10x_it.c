@@ -202,6 +202,7 @@ void EXTI2_IRQHandler(void)
 void EXTI3_IRQHandler(void)
 {
 	DEBUGMSG("EXTI3_IRQHandler");
+#ifndef DR_UPDATE
 	if(EXTI_GetITStatus(EXTI_Line3) != RESET)
 	{
 		if(KEY_PAIR == 0)
@@ -214,6 +215,7 @@ void EXTI3_IRQHandler(void)
 		}
 		EXTI_ClearITPendingBit(EXTI_Line3);
 	}
+#endif
 }
 
 

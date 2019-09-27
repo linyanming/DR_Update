@@ -7,6 +7,7 @@
 #include "bit.h"
 #include "config.h"
 
+#ifndef DR_UPDATE
 #define LED1   PBout(12)
 #define LED2   PBout(13)
 #define LED3   PBout(14)
@@ -15,6 +16,7 @@
 #define RGBBLUE    PAout(8)
 #define RGBGREEN   PAout(9)
 #define RGBRED     PAout(10)
+#endif
 
 #define BEEP  PAout(11)
 

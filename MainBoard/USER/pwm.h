@@ -13,12 +13,14 @@
 
 #define PWM_PRESCALER ((u16)(SystemCoreClock / PRESCALER) - 1)  //分频系数
 
+#ifndef DR_UPDATE
 #define ORTATE_PWM_PRE 80  //转向电机PWM占空比
 #define ORTATE_PWM_PULSE ((ORTATE_PWM_PRE * (PWM_PERIOD + 1) / 100)) //转向电机占空比值
 
 #define ORTATE_STATUS_LEFT 3
 #define ORTATE_STATUS_RIGHT 2
 #define ORTATE_STATUS_STOP 1
+#endif
 
 #define SPEED_BASE 550
 #define SPEED_OFFSET 1300
@@ -57,10 +59,13 @@ extern u8 OrtateMotorStatus;
 
 
 void Motor_Pwm_Init(void);
+
+#ifndef DR_UPDATE
 void Ortate_Motor_Left(void);
 void Ortate_Motor_Right(void);
 void Ortate_Motor_Coast(void);
 void Ortate_Motor_Brate(void);
+#endif
 
 void TIM4_Config(void);
 

@@ -105,7 +105,9 @@ typedef enum
 	NORMAL = 0,
 	ST_PAIR,
 	ST_CANCELPAIR,
+#ifndef DR_UPDATE
 	ORTATE_FAULT,
+#endif
 	VOL_FAULT,
 	HIGH_VOL_FAULT,
 	TEMP_FAULT,

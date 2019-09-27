@@ -51,7 +51,11 @@ void Motor_Pwm_Init(void)
 	
 
 	GPIO_Str.GPIO_Mode = GPIO_Mode_AF_PP;
+#ifdef DR_UPDATE
+	GPIO_Str.GPIO_Pin = GPIO_Pin_1 | GPIO_Pin_2;
+#else
 	GPIO_Str.GPIO_Pin = GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3;
+#endif
 	GPIO_Str.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(GPIOA, &GPIO_Str);
 
@@ -75,13 +79,15 @@ void Motor_Pwm_Init(void)
 	TIM_OCStr.TIM_OCPolarity = TIM_OCPolarity_High;
 	TIM_OC3Init(TIM2, &TIM_OCStr);
 	TIM_OC3PreloadConfig(TIM2, TIM_OCPreload_Enable);
-
+	
+#ifndef DR_UPDATE
 	TIM_OCStr.TIM_OCMode = TIM_OCMode_PWM1;
 	TIM_OCStr.TIM_OutputState = TIM_OutputState_Enable;
 	TIM_OCStr.TIM_Pulse = 0;
 	TIM_OCStr.TIM_OCPolarity = TIM_OCPolarity_High;
 	TIM_OC4Init(TIM2, &TIM_OCStr);
 	TIM_OC4PreloadConfig(TIM2, TIM_OCPreload_Enable);
+#endif
 
 	TIM_ARRPreloadConfig(TIM2, ENABLE);
 	TIM_Cmd(TIM2, ENABLE);
@@ -102,12 +108,15 @@ void Motor_Pwm_Init(void)
 返回值：
 	无
 **************************************/
+
+#ifndef DR_UPDATE
 void Ortate_Motor_Left(void)
 {
 	TIM_SetCompare3(TIM2, ORTATE_PWM_PULSE);
 	TIM_SetCompare4(TIM2, 0);
 	OrtateMotorStatus = ORTATE_STATUS_LEFT;
 }
+#endif
 
 /********************************
 转向电机右转
@@ -120,13 +129,14 @@ void Ortate_Motor_Left(void)
 返回值：
 	无
 **************************************/
+#ifndef DR_UPDATE
 void Ortate_Motor_Right(void)
 {
 	TIM_SetCompare3(TIM2, 0);
 	TIM_SetCompare4(TIM2, ORTATE_PWM_PULSE);
 	OrtateMotorStatus = ORTATE_STATUS_RIGHT;
 }
-
+#endif
 /********************************
 转向电机惯性滑行（停止）
 功能：
@@ -138,13 +148,14 @@ void Ortate_Motor_Right(void)
 返回值：
 	无
 **************************************/
+#ifndef DR_UPDATE
 void Ortate_Motor_Coast(void)
 {
 	TIM_SetCompare3(TIM2, 0);
 	TIM_SetCompare4(TIM2, 0);
 	OrtateMotorStatus = ORTATE_STATUS_STOP;
 }
-
+#endif
 /********************************
 转向电机刹车
 功能：
@@ -156,10 +167,11 @@ void Ortate_Motor_Coast(void)
 返回值：
 	无
 **************************************/
+#ifndef DR_UPDATE
 void Ortate_Motor_Brate(void)
 {
 	TIM_SetCompare3(TIM2, PWM_PERIOD);
 	TIM_SetCompare4(TIM2, PWM_PERIOD);
 	OrtateMotorStatus = ORTATE_STATUS_STOP;
 }
-
+#endif

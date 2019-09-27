@@ -16,10 +16,15 @@ typedef struct
 	u8 k_status;
 }KSCheck;
 //按键检测
+
+#ifndef DR_UPDATE
 KSCheck KPCheck;
+#endif
 KSCheck KPWRCheck;
 
+#ifndef DR_UPDATE
 u8 KPStatus = KEYNONE;
+#endif
 u8 KPWRStatus = KEYNONE;
 u8 KeyFlag = 0;
 u8 KPWRFlag = 0;
@@ -30,7 +35,30 @@ void Key_Init(void)
 	GPIO_InitTypeDef GPIO_Str;
 	EXTI_InitTypeDef EXTI_Str;
 	NVIC_InitTypeDef NVIC_Str;
+
+#ifdef DR_UPDATE
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB | RCC_APB2Periph_AFIO, ENABLE);
+	GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable,  ENABLE);
+
+	GPIO_Str.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+	GPIO_Str.GPIO_Pin = GPIO_Pin_4 | GPIO_Pin_10;
+	GPIO_Init(GPIOB, &GPIO_Str);
+
+	GPIO_EXTILineConfig(GPIO_PortSourceGPIOB, GPIO_PinSource4);
 	
+	EXTI_Str.EXTI_Line = EXTI_Line4;
+	EXTI_Str.EXTI_LineCmd = ENABLE;
+	EXTI_Str.EXTI_Mode = EXTI_Mode_Interrupt;
+	EXTI_Str.EXTI_Trigger = EXTI_Trigger_Rising_Falling;
+	EXTI_Init(&EXTI_Str);
+
+	NVIC_Str.NVIC_IRQChannel = EXTI4_IRQn;
+	NVIC_Str.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Str.NVIC_IRQChannelPreemptionPriority = 0;
+	NVIC_Str.NVIC_IRQChannelSubPriority = 2;
+	NVIC_Init(&NVIC_Str);
+	
+#else
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB | RCC_APB2Periph_GPIOA | RCC_APB2Periph_AFIO, ENABLE);
 	GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable,  ENABLE);
 
@@ -55,13 +83,7 @@ void Key_Init(void)
 	EXTI_Str.EXTI_Mode = EXTI_Mode_Interrupt;
 	EXTI_Str.EXTI_Trigger = EXTI_Trigger_Rising_Falling;
 	EXTI_Init(&EXTI_Str);
-#if 0
-	NVIC_Str.NVIC_IRQChannel = EXTI2_IRQn;
-	NVIC_Str.NVIC_IRQChannelCmd = ENABLE;
-	NVIC_Str.NVIC_IRQChannelPreemptionPriority = 0;
-	NVIC_Str.NVIC_IRQChannelSubPriority = 2;
-	NVIC_Init(&NVIC_Str);
-#endif
+
 	NVIC_Str.NVIC_IRQChannel = EXTI3_IRQn;
 	NVIC_Str.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Str.NVIC_IRQChannelPreemptionPriority = 0;
@@ -74,23 +96,14 @@ void Key_Init(void)
 	NVIC_Str.NVIC_IRQChannelPreemptionPriority = 0;
 	NVIC_Str.NVIC_IRQChannelSubPriority = 0;
 	NVIC_Init(&NVIC_Str);
-
-
-
-#if 0
-	NVIC_Str.NVIC_IRQChannel = EXTI9_5_IRQn;
-	NVIC_Str.NVIC_IRQChannelCmd = ENABLE;
-	NVIC_Str.NVIC_IRQChannelPreemptionPriority = 0;
-	NVIC_Str.NVIC_IRQChannelSubPriority = 1;
-	NVIC_Init(&NVIC_Str);
 #endif
-//	EXTI_GenerateSWInterrupt();
 }
 
 
 
 void KeyShakeCheck(void)
 {
+#ifndef DR_UPDATE
 	if(KPCheck.k_status == PRESS_CHECK)
 	{
 		if(KPCheck.times < KCHECK_MAXTIMES)
@@ -133,6 +146,7 @@ void KeyShakeCheck(void)
 			KPStatus = KPRELEASE;
 		}
 	}
+#endif
 
 	if(KPWRCheck.k_status == PRESS_CHECK)
 	{
@@ -192,6 +206,7 @@ void KeyStatusCheck(KeyEvent key)
 	DEBUGMSG("key = %d", key);
 	switch(key)
 	{
+#ifndef DR_UPDATE
 		case KPPRESS:
 			if(KPStatus == KEYNONE)
 			{
@@ -206,6 +221,7 @@ void KeyStatusCheck(KeyEvent key)
 				KPCheck.times = 0;
 			}
 			break;
+#endif
 		case KPWRPRESS:
 			if(KPWRStatus == KEYNONE)
 			{
