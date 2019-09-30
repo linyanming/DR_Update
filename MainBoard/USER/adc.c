@@ -26,7 +26,11 @@ void ADC_Config(void)
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1 | RCC_APB2Periph_GPIOA, ENABLE);
 
 	GPIO_Str.GPIO_Mode = GPIO_Mode_AIN;
+#ifdef DR_UPDATE
+	GPIO_Str.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_5 | GPIO_Pin_6;
+#else
 	GPIO_Str.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_4 | GPIO_Pin_5;
+#endif
 //	GPIO_Str.GPIO_Pin = GPIO_Pin_4;
 
 	GPIO_Init(GPIOA, &GPIO_Str);
@@ -44,10 +48,16 @@ void ADC_Config(void)
 //	ADC_Str.ADC_ScanConvMode = DISABLE;
 	ADC_Init(ADC1, &ADC_Str);
 
+#ifdef DR_UPDATE
+	ADC_RegularChannelConfig(ADC1, ADC_Channel_0, 1, ADC_SampleTime_239Cycles5);
+	ADC_RegularChannelConfig(ADC1, ADC_Channel_5, 2, ADC_SampleTime_239Cycles5);
+	ADC_RegularChannelConfig(ADC1, ADC_Channel_6, 3, ADC_SampleTime_239Cycles5);
+#else
 	ADC_RegularChannelConfig(ADC1, ADC_Channel_0, 1, ADC_SampleTime_239Cycles5);
 	ADC_RegularChannelConfig(ADC1, ADC_Channel_4, 2, ADC_SampleTime_239Cycles5);
 	ADC_RegularChannelConfig(ADC1, ADC_Channel_5, 3, ADC_SampleTime_239Cycles5);
-	
+#endif
+
 	ADC_DMACmd(ADC1, ENABLE);
 
 	ADC_Cmd(ADC1, ENABLE);

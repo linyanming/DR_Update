@@ -13,7 +13,27 @@ LED初始化函数
 返回值：
 	无
 **************************************/
+#ifdef DR_UPDATE
+void Led_Init(void)
+{
+	GPIO_InitTypeDef GPIO_Str;
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
 
+	GPIO_Str.GPIO_Mode = GPIO_Mode_Out_PP;
+	GPIO_Str.GPIO_Pin = GPIO_Pin_9 | GPIO_Pin_11;
+	GPIO_Str.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init(GPIOA, &GPIO_Str);
+	
+	GPIO_Str.GPIO_Mode = GPIO_Mode_Out_PP;
+	GPIO_Str.GPIO_Pin = GPIO_Pin_0;
+	GPIO_Str.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init(GPIOB, &GPIO_Str);
+
+	NSLEEP = 1;
+}
+
+#else
 void Led_Init(void)
 {
 	GPIO_InitTypeDef GPIO_Str;
@@ -33,7 +53,7 @@ void Led_Init(void)
 //	Led_Reset();
 	DEBUGMSG("LED init");
 }
-
+#endif
 /********************************
 LED重置函数
 功能：
@@ -45,6 +65,7 @@ LED重置函数
 返回值：
 	无
 **************************************/
+#ifndef DR_UPDATE
 void Led_Reset(void)
 {
 	LED1 = 0;
@@ -55,4 +76,4 @@ void Led_Reset(void)
 	RGBGREEN = 0;
 	RGBRED = 0;
 }
-
+#endif

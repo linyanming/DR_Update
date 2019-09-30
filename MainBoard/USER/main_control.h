@@ -5,7 +5,10 @@
 #include "stm32f10x_pwr.h"
 #include "stm32f10x_tim.h"
 #include "config.h"
-
+
+#ifdef DR_UPDATE
+#define BOOT_STSTOP 3  //正在关机状态
+#endif
 #define BOOT_RUN    2  //开机
 #define BOOT_STOP   1  //停机
 #define BOOT_INIT   0  //初始化
@@ -14,10 +17,10 @@
 #define DEVLOSE  1 //设备掉线
 #define DEVCONN 2 //连接状态
 
-#define STOP_TIME  2000  //长按关机时间  这里是2秒
+
 
 #define MAX_CON_DEVNUM 4  //最大设备连接个数
-#define MAX_HEART_TIME 6000 //心跳超时时间 4.5s
+#define MAX_HEART_TIME 6000 //心跳超时时间 6s
 
 #define MOTORMOVERUN 1
 #define MOTORMOVESTOP 0
@@ -52,24 +55,40 @@
 #define BEEPINDMAXTIME 100  //蜂鸣器指示时间200ms
 
 #define PAIR_MAX_TIME 10000  //配对最大时间10S
+
+#ifdef DR_UPDATE
+#define KEYPAIRTOUCH 3000 //按键按下配对时间3S
+#else
 #define KEYPAIRTOUCH 2000 //按键按下配对时间2S
+#endif
 
 #define LIMIT_CURRENT_SPD SPEED4
 
 #define ORTATEMOTORTIME 7000 //一次最多转动7秒
 
+#ifdef DR_UPDATE
+#define STARTTIME 1300 //开机时间1.3秒
+#define STOPTIME  1300  //长按关机时间  这里是1.3秒
+#else
 #define STARTTIME 250 //开机流水灯间隔
+#endif
 
 #define VOLDISTOUCH 300 //按键电量显示
 #define VOLDISTIME  2000 //电量显示时间
 
 //电池电压
+#ifdef DR_UPDATE
+#define VOLTAGEMIN 7
+#define VOLSPEED 12.5  //当电压超过该数值时调整PWM占空比
+#define VOLTAGEMAX 17
+#else
 #define VOLTAGE0  9
 #define VOLTAGE1  10
 #define VOLTAGE2  11
 #define VOLTAGE3  12
 #define VOLTAGE4 14.5
 #define VOLTAGEMAX 18
+#endif
 
 #define SPEED_ADD   0x64 //速度加一档
 #define SPEED_SUB   0x65 //速度减一档
@@ -141,8 +160,10 @@ extern __IO u16 pwr_time;
 extern u8 Speed;
 extern BoardStatus BoardSt;
 extern __IO u16 StartTime;
-extern u8 Voldisflag;
 
+#ifndef DR_UPDATE
+extern u8 Voldisflag;
+#endif
 
 void TIM3_Init(void);
 void SYSCLKConfig_STOP(void);
@@ -179,6 +200,7 @@ void Volreflash(void);
 void SpeedChange(void);
 void TempCheck(void);
 void VolCheck(void);
+void CurrentHandler(float cur);
 
 #endif
 

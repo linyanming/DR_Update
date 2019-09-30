@@ -38,26 +38,29 @@ __IO u16 WpTime; //大功率报警时间
 __IO u16 beepwarntime;  //蜂鸣器报警时间
 __IO u32 beepwarnontime; //蜂鸣器报警持续时间
 
-#ifndef DR_UPDATE
 __IO u16 ledwarntime;	//LED报警时间
 __IO u16 ledwarnmaxtime;  //led报警时间间隔
+
+#ifndef DR_UPDATE
+
 
 __IO u8 yelflashtimes;  //黄灯闪烁次数
 __IO u8 redflashtimes;  //红灯闪烁次数
 __IO u8 yeltemptimes;   //替换变量
 __IO u8 redtemptimes;   //替换变量
-#endif
 
-#ifndef DR_UPDATE
 __IO u32 keypairtime; //配对按键按下时间
-#endif
-__IO u32 pairtime;    //配对持续时间
-
-//u8 ControlDevice;  //当前控制转向电机的设备
 u8 OrtateMotorLock; //转向电机锁 主要用于转270度停止
 __IO u16 OrtateMotorTime; //一次最多转动270度
 
 u8 Voldisflag; //电量显示变量
+
+#endif
+
+__IO u32 pairtime;    //配对持续时间
+
+//u8 ControlDevice;  //当前控制转向电机的设备
+
 
 CommandBuf rxbuf;   //接收缓存
 ConnectDev condev;  //连接设备列表
@@ -88,10 +91,10 @@ void WarningTimeCounter(void)
 	{
 		if(beepwarntime > 0)
 			beepwarntime++;
-#ifndef DR_UPDATE
+
 		if(ledwarntime > 0)
 			ledwarntime++;
-#endif
+		
 		if(TempTime > 0)
 			TempTime++;
 		if(BeepIndTime > 0)
@@ -106,7 +109,11 @@ void WarningTimeCounter(void)
 			WpTime++;
 		SystemTime++;
 	}
+#ifdef DR_UPDATE
+	else if(pwr_status == BOOT_INIT || pwr_status == BOOT_STSTOP)
+#else
 	else if(pwr_status == BOOT_INIT)
+#endif
 	{
 		if(StartTime > 0)
 			StartTime++;
@@ -127,7 +134,23 @@ void WarningTimeCounter(void)
 
 void WarningHandler(void)
 {
-#ifndef DR_UPDATE
+#ifdef DR_UPDATE
+	if(BoardSt == ST_PAIR || BoardSt == ST_CANCELPAIR)
+	{
+		if(ledwarntime > 0 && ledwarntime < ledwarnmaxtime)
+		{
+			LED = 1;
+		}
+		else if(ledwarntime >= ledwarnmaxtime && ledwarntime < (ledwarnmaxtime * 2))
+		{
+			LED = 0;
+		}
+		else
+		{
+			ledwarntime = 1;
+		}
+	}
+#else
 	if(BoardSt == ST_PAIR || BoardSt == ST_CANCELPAIR)
 	{
 		if(ledwarntime > 0 && ledwarntime < ledwarnmaxtime)
@@ -225,10 +248,16 @@ void WarningHandler(void)
 			yelflashtimes = yeltemptimes;
 			redflashtimes = redtemptimes;
 		}
-	}
 #endif
 
+	}
+
+
+#ifdef DR_UPDATE
+	if(BoardSt == WORKPOWER_FAULT)
+#else
 	if(BoardSt == ORTATE_FAULT || BoardSt == WORKPOWER_FAULT)
+#endif
 	{
 		if(beepwarnontime > 0)
 		{
@@ -399,20 +428,16 @@ BigCurrenttime = 1;
 		case ST_PAIR:
 			if(warnlv < PAIRWARN)
 			{
-#ifndef DR_UPDATE
 				ledwarntime = 1;
 				ledwarnmaxtime = RGB_QUIK_FLASH;
-#endif
 				warnlv = PAIRWARN;
 			}
 			break;
 		case ST_CANCELPAIR:
 			if(warnlv < CANCELPAIRWARN)
 			{
-#ifndef DR_UPDATE
 				ledwarntime = 1;
 				ledwarnmaxtime = RGB_NORMAL_FLASH;
-#endif
 				warnlv = CANCELPAIRWARN;
 			}
 			break;
@@ -453,24 +478,27 @@ BigCurrenttime = 1;
 				warnlv = VOLWARN;
 			}
 			break;
+			
+#ifndef DR_UPDATE
 		case ORTATE_FAULT:
 			if(warnlv < ORTATEWARN)
 			{
 				beepwarntime = 1;
-#ifndef DR_UPDATE
+
 				ledwarntime = 1;
 			    ledwarnmaxtime = RGB_QUIK_FLASH;
 				yelflashtimes = 4;
 				redflashtimes = RGB_FLASH_TIMES - yelflashtimes;
 				yeltemptimes = yelflashtimes;
 				redtemptimes = redflashtimes;
-#endif
 				beepwarnontime = 10000;
 				Ortate_Motor_Brate();
 				MotorMoveStop();
 				warnlv = ORTATEWARN;
 			}
 			break;
+#endif
+
 		case TEMP_FAULT:
 			if(warnlv < TEMPWARN)
 			{
@@ -514,9 +542,14 @@ BigCurrenttime = 1;
 			}
 			break;
 		case NORMAL:
+#ifdef DR_UPDATE
 			if(condev.connum > 0)
 			{
-#ifndef DR_UPDATE	
+				LED = 1;
+			}
+#else
+			if(condev.connum > 0)
+			{
 				if(MoveMotorStatus != MOTORMOVESTOP)
 				{
 					RGBBLUE = 1;
@@ -541,15 +574,11 @@ BigCurrenttime = 1;
 			beepwarntime = 0;
 #ifndef DR_UPDATE	
 			ledwarntime = 0;
-//			BigCurrenttime = 0;
 			yelflashtimes = 0;
 			redflashtimes = 0;
-//			yeltemptimes = yelflashtimes;
-//			redtemptimes = redflashtimes;
 #endif
 			beepwarnontime = 0;
 			TempTime = 0;
-//			WpTime = 0;
 			warnlv = NOWARN;
 		default:
 			break;
@@ -574,6 +603,33 @@ void VoltageHandler(float vol)
 	if(fabs(vol - NowVol) >= VOLCHANGEVAL)
 	{
 		NowVol = vol;
+//		printf("vol = %f\n",vol);
+#ifdef DR_UPDATE
+		if(vol > VOLTAGEMAX)
+		{
+			if(BoardSt <= HIGH_VOL_FAULT)
+			{
+				BoardSt = VOL_FAULT;
+			}
+		}
+		else if(vol < VOLTAGEMIN)
+		{
+			if(BoardSt < VOL_FAULT)
+			{
+				BoardSt = VOL_FAULT;
+			}
+		}
+		else
+		{
+			if(BoardSt == VOL_FAULT || BoardSt == HIGH_VOL_FAULT)
+			{
+				BoardSt = NORMAL;
+			}
+			
+			BoradVol = VOL_FULL;
+		}
+
+#else
 		if(vol > VOLTAGE4)
 		{
 			if(vol >= VOLTAGEMAX)
@@ -602,12 +658,10 @@ void VoltageHandler(float vol)
 			{
 				if(Voldisflag == 0)
 				{
-#ifndef DR_UPDATE
 					LED1 = 1;
 					LED2 = 1;
 					LED3 = 1;
 					LED4 = 1;
-#endif
 				}
 				BoradVol = st;
 			}
@@ -624,12 +678,10 @@ void VoltageHandler(float vol)
 				
 				if(Voldisflag == 0)
 				{
-#ifndef DR_UPDATE
 					LED1 = 1;
 					LED2 = 1;
 					LED3 = 1;
 					LED4 = 0;
-#endif	
 				}
 				BoradVol = st;
 			}
@@ -690,7 +742,10 @@ void VoltageHandler(float vol)
 			}
 			BoradVol = VOL_NONE;
 		}
+
+#endif
 	}
+
 }
 
 /********************************
@@ -704,6 +759,7 @@ void VoltageHandler(float vol)
 返回值：
 	无
 **************************************/
+#ifndef DR_UPDATE
 void WorkPowerHandler(float cur,float vol)
 {
 	float wp;
@@ -773,40 +829,76 @@ void WorkPowerHandler(float cur,float vol)
 		}
 	}
 }
-
-#if 0
+#else
 void CurrentHandler(float cur)
 {
-	if(fabs(cur - NowCur) >= CURCHANGEVAL)
+	float wp;
+	wp = cur;
+	
+	if(MoveMotorStatus == MOTORMOVESTOP)
 	{
-		NowCur = cur;
-		if(cur > 60)
+		if(fabs(wp - NowWp) >= CURCHANGEVAL)
 		{
-			if(cur > 70)
+			if(wp >= 3)	//电机停止状态下电流大于3A报警
 			{
-				if(BoardSt < CURRENT_FAULT70)
+				BoardSt = MOTOR_FAULT;
+				return;
+			}
+		}
+	}
+
+	if(BoardSt == WORKPOWER_FAULT && cur > 30 && (now_speed == target_speed))
+	{
+		MotorMoveStop();
+	}
+	
+	if(fabs(wp - NowWp) >= CURCHANGEVAL)
+	{
+		NowWp = wp;
+		if(wp > 25 && wp < 30)	//电流大于25A
+		{
+			if(WpTime == 0 && BoardSt < WORKPOWER_FAULT)
+			{
+				WpTime = 1;
+			}
+//			printf("%d\r\n",WpTime);
+			if(WpTime > 3000)   //持续运行3S
+			{
+				WpTime = 0;
+				if(BoardSt <= WORKPOWER_FAULT)
 				{
-					BoardSt = CURRENT_FAULT70;
+					BoardSt = WORKPOWER_FAULT;
+					if(Speed != SPEED0)
+					{
+						beepwarnontime = 60000;
+					}
+
 				}
 			}
-			else
+		}
+		else if(wp >= 30)
+		{
+			if(BoardSt <= WORKPOWER_FAULT)
 			{
-				if(BoardSt <= CURRENT_FAULT70)
+				BoardSt = WORKPOWER_FAULT;
+				WpTime = 0;
+				if(Speed != SPEED0)
 				{
-					BoardSt = CURRENT_FAULT60;
+					beepwarnontime = 60000;
 				}
-			}
 			
+			}
 		}
 		else
 		{
-			if(BoardSt == CURRENT_FAULT60 || BoardSt == CURRENT_FAULT70)
+			if(BoardSt == WORKPOWER_FAULT && beepwarnontime == 0)
 			{
 				BoardSt = NORMAL;
 			}
 		}
 	}
 }
+
 #endif
 
 /********************************
@@ -880,6 +972,56 @@ void TempCheck(void)
 	}
 }
 
+#ifdef DR_UPDATE
+void VolCheck(void)
+{
+	if(NowVol >= VOLTAGEMAX)
+	{
+		if(BoardSt < HIGH_VOL_FAULT)
+		{
+			BoardSt = HIGH_VOL_FAULT;
+		}
+	}
+	
+	if(NowVol > VOLSPEED)
+	{
+		switch (Speed)
+		{
+			case SPEED1:
+				target_speed = (u16)(SPEED1_VAL * (1 - ((float)(NowVol - VOLSPEED) / VOLSPEED)));
+				DEBUGMSG("targetspeed = %d", target_speed);
+				break;
+			case SPEED2:
+				target_speed = (u16)(SPEED2_VAL * (1 - ((float)(NowVol - VOLSPEED) / VOLSPEED)));
+				DEBUGMSG("targetspeed = %d", target_speed);
+				break;
+			case SPEED3:
+				target_speed = (u16)(SPEED3_VAL * (1 - ((float)(NowVol - VOLSPEED) / VOLSPEED)));
+				DEBUGMSG("targetspeed = %d", target_speed);
+				break;
+			case SPEED4:
+				target_speed = (u16)(SPEED4_VAL * (1 - ((float)(NowVol - VOLSPEED) / VOLSPEED)));
+				DEBUGMSG("targetspeed = %d", target_speed);
+				break;
+			case SPEED5:
+				target_speed = (u16)(SPEED5_VAL * (1 - ((float)(NowVol - VOLSPEED) / VOLSPEED)));
+				DEBUGMSG("targetspeed = %d", target_speed);
+				break;
+			case SPEED6:
+				target_speed = (u16)(SPEED6_VAL * (1 - ((float)(NowVol - VOLSPEED) / VOLSPEED)));
+				DEBUGMSG("targetspeed = %d", target_speed);
+				break;
+			case SPEED7:
+				target_speed = (u16)(SPEED7_VAL * (1 - ((float)(NowVol - VOLSPEED) / VOLSPEED)));
+				DEBUGMSG("targetspeed = %d", target_speed);
+				break;
+			default:
+				break;
+	
+		}
+	}
+}
+#else
 void VolCheck(void)
 {
 	if(NowVol > VOLTAGE4)
@@ -900,7 +1042,7 @@ void VolCheck(void)
 		}
 	}
 }
-
+#endif
 /********************************
 转向电机错误处理
 功能：
@@ -980,7 +1122,11 @@ void ADCHandler(void)
 	float vol;
 	float cur;
 	float temp;
-	if(SystemTime % 1000 == 0)  //1S处理一次
+#ifdef DR_UPDATE
+	if(SystemTime % 100 == 0)  //100ms处理一次
+#else
+	if(SystemTime % 1000 == 0)	//1S处理一次
+#endif
 	{
 //		DEBUGMSG("PB3 = %d pb4 = %d",KEY_PAIR,KEY_PWR);
 		DEBUGMSG("BOARD_ST %d", BoardSt);
@@ -998,15 +1144,18 @@ void ADCHandler(void)
 		}
 //		printf("vol = %f cur = %f temp = %f\r\n",vol,cur,temp);
 		VoltageHandler(vol);
-	//	CurrentHandler(cur);
+#ifdef DR_UPDATE
+		CurrentHandler(cur);
+#else
 		WorkPowerHandler(cur,vol);
-
+#endif
 		TempHandler(temp);
 	}
 	TempCheck();
 	VolCheck();
-	OrtateFaultCheck();
 #ifndef DR_UPDATE
+	OrtateFaultCheck();
+
 	ReedkeyFaultCheck();
 #endif
 }
@@ -1030,11 +1179,12 @@ void MotorMoveCounter(void)
 		{
 			MotorMoveTime++;
 		}
-
+#ifndef DR_UPDATE
 		if(OrateMoveTime > 0)
 		{
 			OrateMoveTime++;
 		}
+#endif
 	}
 }
 
@@ -1051,9 +1201,9 @@ void MotorMoveCounter(void)
 **************************************/
 void DeviceStatusInit(void)
 {
-	Voldisflag = 0;
 	cpflag = 0;
 #ifndef DR_UPDATE
+	Voldisflag = 0;
 	keypairtime = 0;
 #endif
 	pairtime = 0;
@@ -1079,7 +1229,7 @@ void DeviceStatusInit(void)
 //	BigCurrenttime = 0;
 //	OrateMotorStatus = MOTORMOVESTOP;
 #ifdef DR_UPDATE
-	pwr_status = BOOT_RUN;
+	pwr_status = BOOT_STOP;
 #else
 	pwr_status = BOOT_STOP;  //停机开机管理变量
 #endif
@@ -1087,7 +1237,9 @@ void DeviceStatusInit(void)
 	ConnStatus = DEVINIT;
 	DeviceMode = INCH_MODE;
 	MoveMotorStatus = MOTORMOVESTOP;
+#ifndef DR_UPDATE
 	OrtateMotorStatus = ORTATE_STATUS_STOP;
+#endif
 	BoardSt = NORMAL;
 	warnlv = NOWARN;
 	memset(&rxbuf,0,sizeof(rxbuf));
@@ -1516,7 +1668,11 @@ void ModeChangeHandler(CommandData* dev)
 {
 	if(SearchDevice(dev->dev_id) != 0xff)
 	{
+#ifdef DR_UPDATE
+		if(BoardSt <= WORKPOWER_FAULT && BoardSt != HIGH_VOL_FAULT && BoardSt != ST_PAIR && BoardSt != ST_CANCELPAIR)
+#else
 		if(BoardSt <= WORKPOWER_FAULT && BoardSt != HIGH_VOL_FAULT && BoardSt != ORTATE_FAULT && BoardSt != ST_PAIR && BoardSt != ST_CANCELPAIR)
+#endif
 		{
 			if(DeviceMode == INCH_MODE)
 			{
@@ -1816,6 +1972,61 @@ void PairAckHandler(CommandData* dev)
 返回值：
 	无
 *************************************************/
+#ifdef DR_UPDATE
+void KeyHandler(void)
+{
+	if(KPWRStatus == KPWRPRESS)
+	{
+		if(KPWRFlag == 0)
+		{
+			DEBUGMSG("KPWRPRESS");
+			pwr_time = 1;
+			KPWRFlag = 1;
+		}
+	}
+	else if(KPWRStatus == KPWRRELEASE)
+	{
+		DEBUGMSG("KPWRRELEASE pwr_time=%d\n",pwr_time);
+		if(pwr_status == BOOT_STOP)
+		{
+			if(pwr_time > STARTTIME)
+			{
+				pwr_status = BOOT_INIT;
+			}
+		}
+		else if(pwr_status == BOOT_RUN)
+		{
+			if(pwr_time > STOPTIME && pwr_time < KEYPAIRTOUCH - 200)
+			{
+				pwr_status = BOOT_STSTOP;
+			}
+			else if(pwr_time > KEYPAIRTOUCH)
+			{
+				if(condev.dev[REMOTE_BOARD].status == DEVCONN)
+				{
+					if(BoardSt == NORMAL && MoveMotorStatus == MOTORMOVESTOP)
+					{
+						CAN_Send_Msg(NULL, 0, MAIN_BOARD, PAIRING);
+						BoardSt = ST_PAIR;
+						pairtime = SystemTime;
+					}
+					else if(BoardSt == ST_PAIR && MoveMotorStatus == MOTORMOVESTOP)
+					{
+						CAN_Send_Msg(NULL, 0, MAIN_BOARD, CANCEL_PAIR);
+						BoardSt = ST_CANCELPAIR;
+						pairtime = SystemTime;
+					}
+				}
+			}
+		}
+
+		pwr_time = 0;
+		KPWRStatus = KEYNONE;
+		KPWRFlag = 0;
+	}
+}
+
+#else
 void KeyHandler(void)
 {
 	if(pwr_status == BOOT_RUN)
@@ -1922,7 +2133,7 @@ void KeyHandler(void)
 		KPWRFlag = 0;
 	}
 }
-
+#endif
 
 /********************************
 电压更新
@@ -1935,6 +2146,7 @@ void KeyHandler(void)
 返回值：
 	无
 **************************************/
+#ifndef DR_UPDATE
 void Volreflash(void)
 {
 	u16 *val;
@@ -1943,7 +2155,7 @@ void Volreflash(void)
 	vol = val[1] * 3.3 / 4096 * 10;  //工作电压
 	Voldisplay(vol);
 }
-
+#endif
 /********************************
 开机运行函数
 功能：
@@ -2045,7 +2257,9 @@ void BootRunHandler(void)
 	ConnectCheck();
 	ADCHandler();
 	FaultHandler();
+#ifndef DR_UPDATE
 	CloseBootCheck();
+#endif
 }
 
 /********************************
@@ -2059,7 +2273,24 @@ BOOT_INIT状态处理函数
 返回值：
 	无
 **************************************/
+#ifdef DR_UPDATE
+void BootInitHandler(void)
+{
+	if(StartTime == 0)
+	{
+		StartTime = 1;
+		BEEP = 1;
+	}
 
+	if(StartTime > 300)
+	{
+		BEEP = 0;
+		pwr_status = BOOT_RUN;
+		StartTime = 0;
+		CAN_Send_Msg(NULL, 0, MAIN_BOARD,START_BOOT);
+	}
+}
+#else
 void BootInitHandler(void)
 {
 	if(Voldisflag)
@@ -2112,7 +2343,7 @@ void BootInitHandler(void)
 		CAN_Send_Msg(NULL, 0, MAIN_BOARD,START_BOOT);
 	}
 }
-
+#endif
 /********************************
 关机确认函数
 功能：
@@ -2124,6 +2355,25 @@ void BootInitHandler(void)
 返回值：
 	无
 **************************************/
+#ifdef DR_UPDATE
+void CloseBootCheck(void)
+{
+	if(StartTime == 0)
+	{
+		StartTime = 1;
+		BEEP = 1;
+	}
+	
+	if(StartTime > 300)
+	{
+		BEEP = 0;
+		pwr_status = BOOT_STOP;
+		StartTime = 0;
+		CloseBootHandler();
+	}
+}
+
+#else
 void CloseBootCheck(void)
 {
 	if(Voldisflag == 1)
@@ -2165,7 +2415,7 @@ void CloseBootCheck(void)
 		}
 	}
 }
-
+#endif
 /********************************
 关机处理函数
 功能：
@@ -2218,6 +2468,8 @@ void CloseBootHandler(void)
 	BoradVol = VOL_NONE;
 #ifndef DR_UPDATE
 	Led_Reset();
+#else
+	LED = 0;
 #endif
 }
 
@@ -2296,12 +2548,20 @@ void Control_Handler(void)
 		KeyHandler();
 		BootInitHandler();
 	}
+#ifdef DR_UPDATE
+	else if(pwr_status == BOOT_STSTOP)
+	{
+		CloseBootCheck();
+	}
+#endif
 	else
 	{
 		
 		KeyShakeCheck();
 		KeyHandler();
+#ifndef DR_UPDATE
 		Led_Reset();
+#endif
 //		PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
 	}
 }

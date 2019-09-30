@@ -7,7 +7,11 @@
 #include "bit.h"
 #include "config.h"
 
-#ifndef DR_UPDATE
+#ifdef DR_UPDATE
+#define LED   PAout(9)
+
+#define NSLEEP PBout(0)
+#else
 #define LED1   PBout(12)
 #define LED2   PBout(13)
 #define LED3   PBout(14)
