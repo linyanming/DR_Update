@@ -67,7 +67,12 @@
 #define ORTATEMOTORTIME 7000 //一次最多转动7秒
 
 #ifdef DR_UPDATE
-#define STARTTIME 1300 //开机时间1.3秒
+#define CLOSEBEEPTIME 1000//关机鸣叫时长
+#define PAIRBEEPTIME  500 //配对鸣叫时长
+#define STARTBEEPTIME 300 //开机鸣叫时长
+
+#define STARTTIME 30 //开机时间
+
 #define STOPTIME  1300  //长按关机时间  这里是1.3秒
 #else
 #define STARTTIME 250 //开机流水灯间隔
@@ -94,8 +99,16 @@
 #define SPEED_SUB   0x65 //速度减一档
 #define SPEED_ONMAX 0x66 //速度切换，第一次收到时切换到最大档，第二次收到时切换到原始档位
 
+#ifdef DR_UPDATE
+//计算方式 I=(ADC-VOFF)/(AV*RSENSE)
+#define CUR_VOFF   0.029 //待机电压0.029V
+#define CUR_AV     20    //电流增益20倍
+#define CUR_RSENSE 0.005 //电阻5毫欧
+
+#else
 #define CUR_NOISE 2.7  //电流噪声2.7A
 #define CUR_BIAS  0.8  //电流误差参数
+#endif
 typedef struct
 {
 	u8 dev_id;     //控制设备id

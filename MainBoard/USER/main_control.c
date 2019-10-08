@@ -149,6 +149,15 @@ void WarningHandler(void)
 		{
 			ledwarntime = 1;
 		}
+
+		if(beepwarnontime > 0)
+		{
+			BEEP = 1;
+		}
+		else
+		{
+			BEEP = 0;
+		}
 	}
 #else
 	if(BoardSt == ST_PAIR || BoardSt == ST_CANCELPAIR)
@@ -430,6 +439,9 @@ BigCurrenttime = 1;
 			{
 				ledwarntime = 1;
 				ledwarnmaxtime = RGB_QUIK_FLASH;
+#ifdef DR_UPDATE
+				beepwarnontime = PAIRBEEPTIME;
+#endif
 				warnlv = PAIRWARN;
 			}
 			break;
@@ -438,6 +450,9 @@ BigCurrenttime = 1;
 			{
 				ledwarntime = 1;
 				ledwarnmaxtime = RGB_NORMAL_FLASH;
+#ifdef DR_UPDATE
+				beepwarnontime = PAIRBEEPTIME;
+#endif
 				warnlv = CANCELPAIRWARN;
 			}
 			break;
@@ -1123,6 +1138,7 @@ void ADCHandler(void)
 	float cur;
 	float temp;
 #ifdef DR_UPDATE
+	u16 vl[3] = 0;
 	if(SystemTime % 100 == 0)  //100ms处理一次
 #else
 	if(SystemTime % 1000 == 0)	//1S处理一次
@@ -1132,12 +1148,31 @@ void ADCHandler(void)
 		DEBUGMSG("BOARD_ST %d", BoardSt);
 
 		val = Get_ADC_Value();
-//		printf("val = %d %d %d\r\n",val[0],val[1],val[2]);
+#ifdef DR_UPDATE
+		vl[0] = val[0];
+		vl[1] = val[1];
+		vl[2] = val[2];
+		int p = TIM2->CNT;
+//		printf("vl = %d %d %d\r\n",vl[0],vl[1],vl[2]);
+/*
+		cur = vl[0] * 3.3;
+		printf("cur1 = %f\r\n",cur);
+		cur = cur / 4096;
+		printf("cur2 = %f\r\n",cur);
+		cur = cur - CUR_VOFF;
+		printf("cur3 = %f\r\n",cur);
+		cur = cur * 10;
+		printf("cur4 = %f\r\n",cur);  */
+//		printf("p = %d now_speed = %d\r\n",p,now_speed);
+		cur = ((vl[0] * 3.3 / 4096) - CUR_VOFF) / (CUR_AV * CUR_RSENSE); //工作电流
+		vol = vl[1] * 3.3 / 4096 * 10;  //工作电压
+		temp = vl[2] * 3.3 / 4096 / (3.3 - (vl[2] * 3.3 / 4096)) * 5.1; //这里算出来的是热敏电阻阻值 单位：千欧
+#else
 		cur = val[0] * 3.3 / 4096 / 20 * 1000 / 2; //工作电流
 		vol = val[1] * 3.3 / 4096 * 10;  //工作电压
 		temp = val[2] * 3.3 / 4096 / (3.3 - (val[2] * 3.3 / 4096)) * 5.1; //这里算出来的是热敏电阻阻值 单位：千欧
-		
 		cur = (cur - CUR_NOISE) * CUR_BIAS;
+#endif		
 		if(cur < 0)
 		{
 			cur = 0;
@@ -2282,7 +2317,47 @@ void BootInitHandler(void)
 		BEEP = 1;
 	}
 
-	if(StartTime > 300)
+	if(StartTime >= 1 && StartTime < 5*STARTTIME)
+	{
+		BEEP = 1;
+	}
+	else if(StartTime >= 5*STARTTIME && StartTime < 10*STARTTIME)
+	{
+		BEEP = 0;
+	}
+	else if(StartTime >= 10*STARTTIME && StartTime < 12*STARTTIME)
+	{
+		BEEP = 1;
+	}
+	else if(StartTime >= 12*STARTTIME && StartTime < 14*STARTTIME)
+	{
+		BEEP = 0;
+	}
+	else if(StartTime >= 14*STARTTIME && StartTime < 16*STARTTIME)
+	{
+		BEEP = 1;
+	}
+	else if(StartTime >= 16*STARTTIME && StartTime < 18*STARTTIME)
+	{
+		BEEP = 0;
+	}
+	else if(StartTime >= 18*STARTTIME && StartTime < 23*STARTTIME)
+	{
+		BEEP = 1;
+	}
+	else if(StartTime >= 23*STARTTIME && StartTime < 28*STARTTIME)
+	{
+		BEEP = 0;
+	}
+	else if(StartTime >= 28*STARTTIME && StartTime < 33*STARTTIME)
+	{
+		BEEP = 1;
+	}
+	else if(StartTime >= 33*STARTTIME && StartTime < 38*STARTTIME)
+	{
+		BEEP = 0;
+	}
+	else
 	{
 		BEEP = 0;
 		pwr_status = BOOT_RUN;
@@ -2364,7 +2439,7 @@ void CloseBootCheck(void)
 		BEEP = 1;
 	}
 	
-	if(StartTime > 300)
+	if(StartTime > CLOSEBEEPTIME)
 	{
 		BEEP = 0;
 		pwr_status = BOOT_STOP;
