@@ -990,6 +990,7 @@ void TempCheck(void)
 #ifdef DR_UPDATE
 void VolCheck(void)
 {
+	float vol_t;
 	if(NowVol >= VOLTAGEMAX)
 	{
 		if(BoardSt < HIGH_VOL_FAULT)
@@ -997,85 +998,87 @@ void VolCheck(void)
 			BoardSt = HIGH_VOL_FAULT;
 		}
 	}
+
+	vol_t = NowVol + 0.5;  //在采集时电压有压降，所以在这里进行保护判断时加0.5的偏移量
 	
-	if(NowVol > VOLSPEED && DeviceMode == LINK_MODE && MoveMotorStatus == MOTORMOVERUN)
+	if(vol_t > VOLSPEED && DeviceMode == LINK_MODE && MoveMotorStatus == MOTORMOVERUN)
 	{
 		switch (Speed)
 		{
 			case SPEED1:
 				if(BoardSt == WORKPOWER_FAULT || BoardSt == TEMP_FAULT)
 				{
-					target_speed = (u16)(SPEED1_VAL * ((float)(VOLSPEED/NowVol)))/2;
+					target_speed = (u16)(SPEED1_VAL * ((float)(VOLSPEED/vol_t)))*WORKFAULTVAL;
 				}
 				else
 				{
-					target_speed = (u16)(SPEED1_VAL * ((float)(VOLSPEED/NowVol)));
+					target_speed = (u16)(SPEED1_VAL * ((float)(VOLSPEED/vol_t)));
 				}
 				DEBUGMSG("targetspeed = %d", target_speed);
 				break;
 			case SPEED2:
 				if(BoardSt == WORKPOWER_FAULT || BoardSt == TEMP_FAULT)
 				{
-					target_speed = (u16)(SPEED2_VAL * ((float)(VOLSPEED/NowVol)))/2;
+					target_speed = (u16)(SPEED2_VAL * ((float)(VOLSPEED/vol_t)))*WORKFAULTVAL;
 				}
 				else
 				{
-					target_speed = (u16)(SPEED2_VAL * ((float)(VOLSPEED/NowVol)));
+					target_speed = (u16)(SPEED2_VAL * ((float)(VOLSPEED/vol_t)));
 				}
 				DEBUGMSG("targetspeed = %d", target_speed);
 				break;
 			case SPEED3:
 				if(BoardSt == WORKPOWER_FAULT || BoardSt == TEMP_FAULT)
 				{
-					target_speed = (u16)(SPEED3_VAL * ((float)(VOLSPEED/NowVol)))/2;
+					target_speed = (u16)(SPEED3_VAL * ((float)(VOLSPEED/vol_t)))*WORKFAULTVAL;
 				}
 				else
 				{
-					target_speed = (u16)(SPEED3_VAL * ((float)(VOLSPEED/NowVol)));
+					target_speed = (u16)(SPEED3_VAL * ((float)(VOLSPEED/vol_t)));
 				}
 				DEBUGMSG("targetspeed = %d", target_speed);
 				break;
 			case SPEED4:
 				if(BoardSt == WORKPOWER_FAULT || BoardSt == TEMP_FAULT)
 				{
-					target_speed = (u16)(SPEED4_VAL * ((float)(VOLSPEED/NowVol)))/2;
+					target_speed = (u16)(SPEED4_VAL * ((float)(VOLSPEED/vol_t)))*WORKFAULTVAL;
 				}
 				else
 				{
-					target_speed = (u16)(SPEED4_VAL * ((float)(VOLSPEED/NowVol)));
+					target_speed = (u16)(SPEED4_VAL * ((float)(VOLSPEED/vol_t)));
 				}
 				DEBUGMSG("targetspeed = %d", target_speed);
 				break;
 			case SPEED5:
 				if(BoardSt == WORKPOWER_FAULT || BoardSt == TEMP_FAULT)
 				{
-					target_speed = (u16)(SPEED5_VAL * ((float)(VOLSPEED/NowVol)))/2;
+					target_speed = (u16)(SPEED5_VAL * ((float)(VOLSPEED/vol_t)))*WORKFAULTVAL;
 				}
 				else
 				{
-					target_speed = (u16)(SPEED5_VAL * ((float)(VOLSPEED/NowVol)));
+					target_speed = (u16)(SPEED5_VAL * ((float)(VOLSPEED/vol_t)));
 				}
 				DEBUGMSG("targetspeed = %d", target_speed);
 				break;
 			case SPEED6:
 				if(BoardSt == WORKPOWER_FAULT || BoardSt == TEMP_FAULT)
 				{
-					target_speed = (u16)(SPEED6_VAL * ((float)(VOLSPEED/NowVol)))/2;
+					target_speed = (u16)(SPEED6_VAL * ((float)(VOLSPEED/vol_t)))*WORKFAULTVAL;
 				}
 				else
 				{
-					target_speed = (u16)(SPEED6_VAL * ((float)(VOLSPEED/NowVol)));
+					target_speed = (u16)(SPEED6_VAL * ((float)(VOLSPEED/vol_t)));
 				}
 				DEBUGMSG("targetspeed = %d", target_speed);
 				break;
 			case SPEED7:
 				if(BoardSt == WORKPOWER_FAULT || BoardSt == TEMP_FAULT)
 				{
-					target_speed = (u16)(SPEED7_VAL * ((float)(VOLSPEED/NowVol)))/2;
+					target_speed = (u16)(SPEED7_VAL * ((float)(VOLSPEED/vol_t)))*WORKFAULTVAL;
 				}
 				else
 				{
-					target_speed = (u16)(SPEED7_VAL * ((float)(VOLSPEED/NowVol)));
+					target_speed = (u16)(SPEED7_VAL * ((float)(VOLSPEED/vol_t)));
 				}
 				DEBUGMSG("targetspeed = %d", target_speed);
 				break;
@@ -1405,7 +1408,7 @@ void MotorMoveSpeedSet(void)
 		case SPEED1:
 			if(BoardSt == WORKPOWER_FAULT || BoardSt == TEMP_FAULT)
 			{
-				target_speed = SPEED1_VAL/2;
+				target_speed = SPEED1_VAL*WORKFAULTVAL;
 			}
 			else
 			{
@@ -1415,7 +1418,7 @@ void MotorMoveSpeedSet(void)
 		case SPEED2:
 			if(BoardSt == WORKPOWER_FAULT || BoardSt == TEMP_FAULT)
 			{
-				target_speed = SPEED2_VAL/2;
+				target_speed = SPEED2_VAL*WORKFAULTVAL;
 			}
 			else
 			{
@@ -1425,7 +1428,7 @@ void MotorMoveSpeedSet(void)
 		case SPEED3:
 			if(BoardSt == WORKPOWER_FAULT || BoardSt == TEMP_FAULT)
 			{
-				target_speed = SPEED3_VAL/2;
+				target_speed = SPEED3_VAL*WORKFAULTVAL;
 			}
 			else
 			{
@@ -1435,7 +1438,7 @@ void MotorMoveSpeedSet(void)
 		case SPEED4:
 			if(BoardSt == WORKPOWER_FAULT || BoardSt == TEMP_FAULT)
 			{
-				target_speed = SPEED4_VAL/2;
+				target_speed = SPEED4_VAL*WORKFAULTVAL;
 			}
 			else
 			{
@@ -1445,7 +1448,7 @@ void MotorMoveSpeedSet(void)
 		case SPEED5:
 			if(BoardSt == WORKPOWER_FAULT || BoardSt == TEMP_FAULT)
 			{
-				target_speed = SPEED5_VAL/2;
+				target_speed = SPEED5_VAL*WORKFAULTVAL;
 			}
 			else
 			{
@@ -1455,7 +1458,7 @@ void MotorMoveSpeedSet(void)
 		case SPEED6:
 			if(BoardSt == WORKPOWER_FAULT || BoardSt == TEMP_FAULT)
 			{
-				target_speed = SPEED6_VAL/2;
+				target_speed = SPEED6_VAL*WORKFAULTVAL;
 			}
 			else
 			{
@@ -1465,7 +1468,7 @@ void MotorMoveSpeedSet(void)
 		case SPEED7:
 			if(BoardSt == WORKPOWER_FAULT || BoardSt == TEMP_FAULT)
 			{
-				target_speed = SPEED7_VAL/2;
+				target_speed = SPEED7_VAL*WORKFAULTVAL;
 			}
 			else
 			{
@@ -2688,26 +2691,27 @@ void Control_Handler(void)
 
 
 #ifdef DR_UPDATE
+#define COUNTNUM 100 //电流取样次数
 //电流平均滤波函数
-u16 CurBuf[15] = {0};  //电流ADC值缓存数组
+u16 CurBuf[COUNTNUM] = {0};  //电流ADC值缓存数组
 u16 CurADC = 0; //计算出来的ADC平均值
 void CurFilter(void)
 {
 	u16 *p;
 	u32 temp = 0;
 	p = Get_ADC_Value();
-	for(u8 i = 0;i < 14;i++)
+	for(u8 i = 0;i < COUNTNUM - 1;i++)
 	{
 		CurBuf[i] = CurBuf[i + 1];
 	}
-	CurBuf[14] = p[0];
+	CurBuf[COUNTNUM - 1] = p[0];
 	
-	for(u8 i = 0;i < 15;i++)
+	for(u8 i = 0;i < COUNTNUM;i++)
 	{
 		temp += CurBuf[i];
 	}
 	
-	CurADC = temp/15;
+	CurADC = temp/COUNTNUM;
 }
 
 u16 getCurValue(void)

@@ -27,6 +27,8 @@
 #define SPEED_OFFSET 1850
 #define SPEED_SWITCH_BASE 50
 
+#define WORKFAULTVAL 0.8  //电流报警时占空比调整倍数
+
 #define SPEED0 0
 #define SPEED1 1
 #define SPEED2 2

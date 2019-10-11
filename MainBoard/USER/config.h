@@ -13,7 +13,7 @@ typedef uint32_t u32;
 
 //#define NULL ((void *)0)
 
-#define USART_DEBUG   //串口调试宏定义s
+//#define USART_DEBUG   //串口调试宏定义s
 
 #ifdef USART_DEBUG
 //#define DEBUGMSG(s,...) printf(s,##__VA_ARGS__);printf(",%d,%s\r\n",__LINE__,__FILE__)
