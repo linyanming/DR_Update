@@ -998,7 +998,7 @@ void VolCheck(void)
 		}
 	}
 	
-	if(NowVol > VOLSPEED && DeviceMode == LINK_MODE)
+	if(NowVol > VOLSPEED && DeviceMode == LINK_MODE && MoveMotorStatus == MOTORMOVERUN)
 	{
 		switch (Speed)
 		{
