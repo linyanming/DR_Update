@@ -998,41 +998,89 @@ void VolCheck(void)
 		}
 	}
 	
-	if(NowVol > VOLSPEED)
+	if(NowVol > VOLSPEED && DeviceMode == LINK_MODE)
 	{
 		switch (Speed)
 		{
 			case SPEED1:
-				target_speed = (u16)(SPEED1_VAL * (1 - ((float)(NowVol - VOLSPEED) / VOLSPEED)));
+				if(BoardSt == WORKPOWER_FAULT || BoardSt == TEMP_FAULT)
+				{
+					target_speed = (u16)(SPEED1_VAL * ((float)(VOLSPEED/NowVol)))/2;
+				}
+				else
+				{
+					target_speed = (u16)(SPEED1_VAL * ((float)(VOLSPEED/NowVol)));
+				}
 				DEBUGMSG("targetspeed = %d", target_speed);
 				break;
 			case SPEED2:
-				target_speed = (u16)(SPEED2_VAL * (1 - ((float)(NowVol - VOLSPEED) / VOLSPEED)));
+				if(BoardSt == WORKPOWER_FAULT || BoardSt == TEMP_FAULT)
+				{
+					target_speed = (u16)(SPEED2_VAL * ((float)(VOLSPEED/NowVol)))/2;
+				}
+				else
+				{
+					target_speed = (u16)(SPEED2_VAL * ((float)(VOLSPEED/NowVol)));
+				}
 				DEBUGMSG("targetspeed = %d", target_speed);
 				break;
 			case SPEED3:
-				target_speed = (u16)(SPEED3_VAL * (1 - ((float)(NowVol - VOLSPEED) / VOLSPEED)));
+				if(BoardSt == WORKPOWER_FAULT || BoardSt == TEMP_FAULT)
+				{
+					target_speed = (u16)(SPEED3_VAL * ((float)(VOLSPEED/NowVol)))/2;
+				}
+				else
+				{
+					target_speed = (u16)(SPEED3_VAL * ((float)(VOLSPEED/NowVol)));
+				}
 				DEBUGMSG("targetspeed = %d", target_speed);
 				break;
 			case SPEED4:
-				target_speed = (u16)(SPEED4_VAL * (1 - ((float)(NowVol - VOLSPEED) / VOLSPEED)));
+				if(BoardSt == WORKPOWER_FAULT || BoardSt == TEMP_FAULT)
+				{
+					target_speed = (u16)(SPEED4_VAL * ((float)(VOLSPEED/NowVol)))/2;
+				}
+				else
+				{
+					target_speed = (u16)(SPEED4_VAL * ((float)(VOLSPEED/NowVol)));
+				}
 				DEBUGMSG("targetspeed = %d", target_speed);
 				break;
 			case SPEED5:
-				target_speed = (u16)(SPEED5_VAL * (1 - ((float)(NowVol - VOLSPEED) / VOLSPEED)));
+				if(BoardSt == WORKPOWER_FAULT || BoardSt == TEMP_FAULT)
+				{
+					target_speed = (u16)(SPEED5_VAL * ((float)(VOLSPEED/NowVol)))/2;
+				}
+				else
+				{
+					target_speed = (u16)(SPEED5_VAL * ((float)(VOLSPEED/NowVol)));
+				}
 				DEBUGMSG("targetspeed = %d", target_speed);
 				break;
 			case SPEED6:
-				target_speed = (u16)(SPEED6_VAL * (1 - ((float)(NowVol - VOLSPEED) / VOLSPEED)));
+				if(BoardSt == WORKPOWER_FAULT || BoardSt == TEMP_FAULT)
+				{
+					target_speed = (u16)(SPEED6_VAL * ((float)(VOLSPEED/NowVol)))/2;
+				}
+				else
+				{
+					target_speed = (u16)(SPEED6_VAL * ((float)(VOLSPEED/NowVol)));
+				}
 				DEBUGMSG("targetspeed = %d", target_speed);
 				break;
 			case SPEED7:
-				target_speed = (u16)(SPEED7_VAL * (1 - ((float)(NowVol - VOLSPEED) / VOLSPEED)));
+				if(BoardSt == WORKPOWER_FAULT || BoardSt == TEMP_FAULT)
+				{
+					target_speed = (u16)(SPEED7_VAL * ((float)(VOLSPEED/NowVol)))/2;
+				}
+				else
+				{
+					target_speed = (u16)(SPEED7_VAL * ((float)(VOLSPEED/NowVol)));
+				}
 				DEBUGMSG("targetspeed = %d", target_speed);
 				break;
 			default:
 				break;
-	
 		}
 	}
 }
@@ -1149,11 +1197,10 @@ void ADCHandler(void)
 
 		val = Get_ADC_Value();
 #ifdef DR_UPDATE
-		vl[0] = val[0];
+		vl[0] = getCurValue();
 		vl[1] = val[1];
 		vl[2] = val[2];
-		int p = TIM2->CNT;
-//		printf("vl = %d %d %d\r\n",vl[0],vl[1],vl[2]);
+		DEBUGMSG("vl = %d %d %d\r\n",vl[0],vl[1],vl[2]);
 /*
 		cur = vl[0] * 3.3;
 		printf("cur1 = %f\r\n",cur);
@@ -1177,7 +1224,7 @@ void ADCHandler(void)
 		{
 			cur = 0;
 		}
-//		printf("vol = %f cur = %f temp = %f\r\n",vol,cur,temp);
+		DEBUGMSG("vol = %f cur = %f temp = %f\r\n",vol,cur,temp);
 		VoltageHandler(vol);
 #ifdef DR_UPDATE
 		CurrentHandler(cur);
@@ -1323,7 +1370,7 @@ void MotorMoveStop(void)
 	st = (DeviceMode << 1);
 	now_speed = 0;
 	target_speed = 0;
-	Speed = 0;
+//	Speed = 0;  //停止时不将储存的速度置为0
 	
 #ifdef DR_UPDATE
 	TIM_SetCompare3(TIM2, now_speed);
@@ -1666,26 +1713,23 @@ void HeartBeatHandler(u8 devid)
 **************************************/
 void ConnectHandler(CommandData* dev)
 {
-//	if(SearchDevice(dev->dev_id) == 0xff)
-//	{
-		if(BoardSt == CONNECT_FAULT)
+	if(BoardSt == CONNECT_FAULT)
+	{
+		if(condev.dev[dev->dev_id].status == DEVLOSE)
 		{
-			if(condev.dev[dev->dev_id].status == DEVLOSE)
-			{
-				BoardSt = NORMAL;
-			}
+			BoardSt = NORMAL;
 		}
-		
-		if(condev.dev[dev->dev_id].status != DEVCONN)
-		{
-			condev.dev[dev->dev_id].dev_id = dev->dev_id;
-			condev.dev[dev->dev_id].status = DEVCONN;
-			condev.connum++;
-		}
-		
-		condev.dev[dev->dev_id].heart_time = 1;
-		CAN_Send_Msg(NULL, 0, condev.dev[dev->dev_id].dev_id, CONNECT_ACK);
-//	}
+	}
+	
+	if(condev.dev[dev->dev_id].status != DEVCONN)
+	{
+		condev.dev[dev->dev_id].dev_id = dev->dev_id;
+		condev.dev[dev->dev_id].status = DEVCONN;
+		condev.connum++;
+	}
+	
+	condev.dev[dev->dev_id].heart_time = 1;
+	CAN_Send_Msg(NULL, 0, condev.dev[dev->dev_id].dev_id, CONNECT_ACK);
 }
 
 /********************************
@@ -1755,70 +1799,64 @@ void OrtateMotorControl(CommandData* dev)
 			
 			if(dev->dev_cmd == LEFT_TURN)
 			{
-//				if(ControlDevice == MAIN_BOARD || ControlDevice == dev->dev_id)
-//				{
-					if(OrtateMotorLock == 0)
+				if(OrtateMotorLock == 0)
+				{
+					if(OrtateMotorStatus == ORTATE_STATUS_RIGHT)
 					{
-						if(OrtateMotorStatus == ORTATE_STATUS_RIGHT)
-						{
-							Ortate_Motor_Brate();
-							OrtateMotorLock = 1;
-							OrtateMotorTime = 0;
-							OrateMoveTime = 0;
-						}
-						else if(OrtateMotorStatus == ORTATE_STATUS_LEFT)
-						{
-							OrateMoveTime = 1;
-						}
-						else if(OrtateMotorStatus == ORTATE_STATUS_STOP)
-						{
-							if(BoardSt == NORMAL)
-
-							{
-								BeepIndTime = 1;
-								BEEP = 1;
-							}
-							Ortate_Motor_Left();
-							OrateMoveTime = 1;
-							OrtateMotorTime = 1;
-						}
-
+						Ortate_Motor_Brate();
+						OrtateMotorLock = 1;
+						OrtateMotorTime = 0;
+						OrateMoveTime = 0;
 					}
-//					ControlDevice = dev->dev_id;
-//				}
+					else if(OrtateMotorStatus == ORTATE_STATUS_LEFT)
+					{
+						OrateMoveTime = 1;
+					}
+					else if(OrtateMotorStatus == ORTATE_STATUS_STOP)
+					{
+						if(BoardSt == NORMAL)
+
+						{
+							BeepIndTime = 1;
+							BEEP = 1;
+						}
+						Ortate_Motor_Left();
+						OrateMoveTime = 1;
+						OrtateMotorTime = 1;
+					}
+
+				}
 			}
 			else if(dev->dev_cmd == RIGHT_TURN)
 			{
-//				if(ControlDevice == MAIN_BOARD || ControlDevice == dev->dev_id)
-//				{
-					if(OrtateMotorLock == 0)
+				if(OrtateMotorLock == 0)
+				{
+					if(OrtateMotorStatus == ORTATE_STATUS_LEFT)
 					{
-						if(OrtateMotorStatus == ORTATE_STATUS_LEFT)
-						{
-							Ortate_Motor_Brate();
-							OrtateMotorLock = 1;
-							OrtateMotorTime = 0;
-							OrateMoveTime = 0;
-						}
-						else if(OrtateMotorStatus == ORTATE_STATUS_RIGHT)
-						{
-							OrateMoveTime = 1;
-						}
-						else if(OrtateMotorStatus == ORTATE_STATUS_STOP)
-						{
-							if(BoardSt == NORMAL)
-
-							{
-								BeepIndTime = 1;
-								BEEP = 1;
-							}
-
-							Ortate_Motor_Right();
-							OrateMoveTime = 1;
-							OrtateMotorTime = 1;
-						}
-
+						Ortate_Motor_Brate();
+						OrtateMotorLock = 1;
+						OrtateMotorTime = 0;
+						OrateMoveTime = 0;
 					}
+					else if(OrtateMotorStatus == ORTATE_STATUS_RIGHT)
+					{
+						OrateMoveTime = 1;
+					}
+					else if(OrtateMotorStatus == ORTATE_STATUS_STOP)
+					{
+						if(BoardSt == NORMAL)
+
+						{
+							BeepIndTime = 1;
+							BEEP = 1;
+						}
+
+						Ortate_Motor_Right();
+						OrateMoveTime = 1;
+						OrtateMotorTime = 1;
+					}
+
+				}
 			}
 			else
 			{	
@@ -1905,7 +1943,11 @@ void SpeedControlHandler(CommandData* dev)
 {
 	if(SearchDevice(dev->dev_id) != 0xff)
 	{
+#ifdef DR_UPDATE
+		if(BoardSt != ST_PAIR && BoardSt != ST_CANCELPAIR && DeviceMode == LINK_MODE)  //只有在电机启动模式下才可以调速
+#else
 		if(BoardSt != ST_PAIR && BoardSt != ST_CANCELPAIR)
+#endif
 		{
 			if(Speed != dev->data[0])
 			{
@@ -2290,6 +2332,9 @@ void BootRunHandler(void)
 	KeyShakeCheck();
 	KeyHandler();
 	ConnectCheck();
+#ifdef DR_UPDATE
+	CurFilter();
+#endif
 	ADCHandler();
 	FaultHandler();
 #ifndef DR_UPDATE
@@ -2640,6 +2685,37 @@ void Control_Handler(void)
 //		PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
 	}
 }
+
+
+#ifdef DR_UPDATE
+//电流平均滤波函数
+u16 CurBuf[15] = {0};  //电流ADC值缓存数组
+u16 CurADC = 0; //计算出来的ADC平均值
+void CurFilter(void)
+{
+	u16 *p;
+	u32 temp = 0;
+	p = Get_ADC_Value();
+	for(u8 i = 0;i < 14;i++)
+	{
+		CurBuf[i] = CurBuf[i + 1];
+	}
+	CurBuf[14] = p[0];
+	
+	for(u8 i = 0;i < 15;i++)
+	{
+		temp += CurBuf[i];
+	}
+	
+	CurADC = temp/15;
+}
+
+u16 getCurValue(void)
+{
+	return CurADC;
+}
+
+#endif
 
 /********************************
 定时器3初始化

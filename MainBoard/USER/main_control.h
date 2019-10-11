@@ -84,7 +84,7 @@
 //电池电压
 #ifdef DR_UPDATE
 #define VOLTAGEMIN 7
-#define VOLSPEED 12.5  //当电压超过该数值时调整PWM占空比
+#define VOLSPEED 12.3  //当电压超过该数值时调整PWM占空比
 #define VOLTAGEMAX 17
 #else
 #define VOLTAGE0  9
@@ -214,6 +214,11 @@ void SpeedChange(void);
 void TempCheck(void);
 void VolCheck(void);
 void CurrentHandler(float cur);
+
+#ifdef DR_UPDATE
+void CurFilter(void);
+u16 getCurValue(void);
+#endif
 
 #endif
 
