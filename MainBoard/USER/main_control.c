@@ -472,6 +472,8 @@ BigCurrenttime = 1;
 				{
 					beepwarnontime = 60000;
 				}
+				DEBUGMSG("WORKPOWERFAULT");
+		//		Speed = 0;
 				MotorMoveSpeedSet();
 				warnlv = WORKPOWERWARN;
 			}
@@ -849,7 +851,7 @@ void CurrentHandler(float cur)
 {
 	float wp;
 	wp = cur;
-	
+/*	
 	if(MoveMotorStatus == MOTORMOVESTOP)
 	{
 		if(fabs(wp - NowWp) >= CURCHANGEVAL)
@@ -861,12 +863,15 @@ void CurrentHandler(float cur)
 			}
 		}
 	}
-
-	if(BoardSt == WORKPOWER_FAULT && cur > 30 && (now_speed == target_speed))
+*/
+//	DEBUGMSG("cur = %f,nowspeed = %d,targetspeed= %d",wp,now_speed,target_speed);
+/*	if(BoardSt == WORKPOWER_FAULT && wp > 50 && (now_speed == target_speed))
 	{
+		DEBUGMSG("CurrentHandler WORKPOWER_FAULT");
 		MotorMoveStop();
-	}
-	
+		Speed = 0;
+	}*/
+	DEBUGMSG("wp = %f,nowwp = %f", wp,NowWp);
 	if(fabs(wp - NowWp) >= CURCHANGEVAL)
 	{
 		NowWp = wp;
@@ -879,6 +884,7 @@ void CurrentHandler(float cur)
 //			printf("%d\r\n",WpTime);
 			if(WpTime > 3000)   //持续运行3S
 			{
+				DEBUGMSG("CurrentHandler WpTime = %d",WpTime);
 				WpTime = 0;
 				if(BoardSt <= WORKPOWER_FAULT)
 				{
@@ -895,21 +901,23 @@ void CurrentHandler(float cur)
 		{
 			if(BoardSt <= WORKPOWER_FAULT)
 			{
+				DEBUGMSG("CurrentHandler WORKPOWER_FAULT wp = %f",wp);
 				BoardSt = WORKPOWER_FAULT;
 				WpTime = 0;
 				if(Speed != SPEED0)
 				{
 					beepwarnontime = 60000;
+					MotorMoveStop();
 				}
-			
+				Speed = 0;
 			}
-		}
+		} 
 		else
 		{
-			if(BoardSt == WORKPOWER_FAULT && beepwarnontime == 0)
+	/*		if(BoardSt == WORKPOWER_FAULT && beepwarnontime == 0)
 			{
 				BoardSt = NORMAL;
-			}
+			}*/
 		}
 	}
 }
@@ -998,7 +1006,7 @@ void VolCheck(void)
 			BoardSt = HIGH_VOL_FAULT;
 		}
 	}
-
+#if 1
 	vol_t = NowVol + 0.5;  //在采集时电压有压降，所以在这里进行保护判断时加0.5的偏移量
 	
 	if(vol_t > VOLSPEED && DeviceMode == LINK_MODE && MoveMotorStatus == MOTORMOVERUN)
@@ -1014,7 +1022,7 @@ void VolCheck(void)
 				{
 					target_speed = (u16)(SPEED1_VAL * ((float)(VOLSPEED/vol_t)));
 				}
-				DEBUGMSG("targetspeed = %d", target_speed);
+	//			DEBUGMSG("targetspeed = %d", target_speed);
 				break;
 			case SPEED2:
 				if(BoardSt == WORKPOWER_FAULT || BoardSt == TEMP_FAULT)
@@ -1025,7 +1033,7 @@ void VolCheck(void)
 				{
 					target_speed = (u16)(SPEED2_VAL * ((float)(VOLSPEED/vol_t)));
 				}
-				DEBUGMSG("targetspeed = %d", target_speed);
+//				DEBUGMSG("targetspeed = %d", target_speed);
 				break;
 			case SPEED3:
 				if(BoardSt == WORKPOWER_FAULT || BoardSt == TEMP_FAULT)
@@ -1036,7 +1044,7 @@ void VolCheck(void)
 				{
 					target_speed = (u16)(SPEED3_VAL * ((float)(VOLSPEED/vol_t)));
 				}
-				DEBUGMSG("targetspeed = %d", target_speed);
+	//			DEBUGMSG("targetspeed = %d", target_speed);
 				break;
 			case SPEED4:
 				if(BoardSt == WORKPOWER_FAULT || BoardSt == TEMP_FAULT)
@@ -1047,7 +1055,7 @@ void VolCheck(void)
 				{
 					target_speed = (u16)(SPEED4_VAL * ((float)(VOLSPEED/vol_t)));
 				}
-				DEBUGMSG("targetspeed = %d", target_speed);
+		//		DEBUGMSG("targetspeed = %d", target_speed);
 				break;
 			case SPEED5:
 				if(BoardSt == WORKPOWER_FAULT || BoardSt == TEMP_FAULT)
@@ -1058,7 +1066,7 @@ void VolCheck(void)
 				{
 					target_speed = (u16)(SPEED5_VAL * ((float)(VOLSPEED/vol_t)));
 				}
-				DEBUGMSG("targetspeed = %d", target_speed);
+	//			DEBUGMSG("targetspeed = %d", target_speed);
 				break;
 			case SPEED6:
 				if(BoardSt == WORKPOWER_FAULT || BoardSt == TEMP_FAULT)
@@ -1069,7 +1077,7 @@ void VolCheck(void)
 				{
 					target_speed = (u16)(SPEED6_VAL * ((float)(VOLSPEED/vol_t)));
 				}
-				DEBUGMSG("targetspeed = %d", target_speed);
+	//			DEBUGMSG("targetspeed = %d", target_speed);
 				break;
 			case SPEED7:
 				if(BoardSt == WORKPOWER_FAULT || BoardSt == TEMP_FAULT)
@@ -1080,12 +1088,13 @@ void VolCheck(void)
 				{
 					target_speed = (u16)(SPEED7_VAL * ((float)(VOLSPEED/vol_t)));
 				}
-				DEBUGMSG("targetspeed = %d", target_speed);
+		//		DEBUGMSG("targetspeed = %d", target_speed);
 				break;
 			default:
 				break;
 		}
 	}
+#endif
 }
 #else
 void VolCheck(void)
@@ -1203,7 +1212,7 @@ void ADCHandler(void)
 		vl[0] = getCurValue();
 		vl[1] = val[1];
 		vl[2] = val[2];
-		DEBUGMSG("vl = %d %d %d\r\n",vl[0],vl[1],vl[2]);
+//		DEBUGMSG("vl = %d %d %d\r\n",vl[0],vl[1],vl[2]);
 /*
 		cur = vl[0] * 3.3;
 		printf("cur1 = %f\r\n",cur);
@@ -1227,7 +1236,7 @@ void ADCHandler(void)
 		{
 			cur = 0;
 		}
-		DEBUGMSG("vol = %f cur = %f temp = %f\r\n",vol,cur,temp);
+//		DEBUGMSG("vol = %f cur = %f temp = %f\r\n",vol,cur,temp);
 		VoltageHandler(vol);
 #ifdef DR_UPDATE
 		CurrentHandler(cur);
@@ -2290,9 +2299,17 @@ void BootRunHandler(void)
 		rxbuf.Rxflag = 0;
 	}
 //	SpeedChange();
+#ifdef DR_UPDATE
+	if(BoardSt == WORKPOWER_FAULT && (DeviceMode == INCH_MODE || beepwarnontime == 0))
+#else
 	if(BoardSt == WORKPOWER_FAULT && now_speed == 0)
+#endif
 	{
 		beepwarnontime = 0;
+		if(NowWp < 25)
+		{
+			BoardSt = NORMAL;
+		}
 	}
 
 	if(MotorMoveTime > MAX_MOVE_TIME)
